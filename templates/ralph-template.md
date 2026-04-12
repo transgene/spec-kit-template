@@ -5,7 +5,7 @@ At the start of every iteration:
 2. Read the spec-kit feature docs:
    - `specs/[###-feature-name]/spec.md`
    - `specs/[###-feature-name]/plan.md`
-   - `specs/[###-feature-name]/`tasks.md``
+   - `specs/[###-feature-name]/tasks.md`
 3. If present, also read:
    - `specs/[###-feature-name]/research.md`
    - `specs/[###-feature-name]/data-model.md`
@@ -26,6 +26,7 @@ Execution rules:
   - validation run
   - blockers, if any
 - Do not try to finish the whole feature in one iteration.
+- Do not stop until **all** checkboxes in `specs/[###-feature-name]/tasks.md` are checked. The only exception is if an **impassable obstacle is encountered**.
 
 Completion rules:
 - Emit <promise>COMPLETE</promise> only when all required tasks in `tasks.md` are complete and the relevant validations pass.
