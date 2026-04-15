@@ -54,7 +54,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
-1. **Setup**: Run `.specify/scripts/bash/setup-plan.sh --json` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+1. **Setup**: Resolve the active feature first, print `Feature Name` and `Feature Slug` in the conversation, then run `.specify/scripts/bash/setup-plan.sh --json --feature "<feature-slug>"` from repo root and parse JSON for `FEATURE_SPEC`, `IMPL_PLAN`, `FEATURE_DIR`, `FEATURE_SLUG`, and `FEATURE_NAME`. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Load context**: Read FEATURE_SPEC and `.specify/memory/constitution.md`. Load IMPL_PLAN template (already copied) and `.specify/templates/ralph-template.md`.
 
@@ -64,11 +64,11 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Evaluate gates (ERROR if violations unjustified)
    - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
    - Phase 1: Generate data-model.md, contracts/, quickstart.md
-   - Create `ralph.md` in `SPECS_DIR` from `.specify/templates/ralph-template.md`, replacing `[FEATURE]` with the current feature name and `[###-feature-name]` with the current feature directory slug
+   - Create `ralph.md` in `FEATURE_DIR` from `.specify/templates/ralph-template.md`, replacing `[FEATURE]` with the current feature name and `[###-feature-name]` with the current feature directory slug
    - Phase 1: Update agent context by running the agent script
    - Re-evaluate Constitution Check post-design
 
-4. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts, including `ralph.md`.
+4. **Stop and report**: Command ends after Phase 2 planning. Report feature name, feature slug, IMPL_PLAN path, and generated artifacts, including `ralph.md`.
 
 5. **Check for extension hooks**: After reporting, check if `.specify/extensions.yml` exists in the project root.
    - If it exists, read it and look for entries under the `hooks.after_plan` key
@@ -140,7 +140,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Skip if project is purely internal (build scripts, one-off tools, etc.)
 
 3. **Create iteration prompt** → `ralph.md`:
-   - Copy `.specify/templates/ralph-template.md` to `SPECS_DIR/ralph.md`
+   - Copy `.specify/templates/ralph-template.md` to `FEATURE_DIR/ralph.md`
    - Replace `[FEATURE]` with the current feature name
    - Replace `[###-feature-name]` with the current feature directory slug
 
@@ -157,4 +157,3 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 - Use absolute paths
 - ERROR on gate failures or unresolved clarifications
-

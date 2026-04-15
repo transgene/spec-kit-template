@@ -12,12 +12,13 @@
 #   --require-tasks     Require tasks.md to exist (for implementation phase)
 #   --include-tasks     Include tasks.md in AVAILABLE_DOCS list
 #   --paths-only        Only output path variables (no validation)
+#   --feature <slug>    Resolve paths for the given feature slug
 #   --help, -h          Show help message
 #
 # OUTPUTS:
 #   JSON mode: {"FEATURE_DIR":"...", "AVAILABLE_DOCS":["..."]}
 #   Text mode: FEATURE_DIR:... \n AVAILABLE_DOCS: \n ✓/✗ file.md
-#   Paths only: REPO_ROOT: ... \n BRANCH: ... \n FEATURE_DIR: ... etc.
+#   Paths only: REPO_ROOT: ... \n FEATURE_SLUG: ... \n FEATURE_DIR: ... etc.
 
 set -e
 
@@ -26,23 +27,32 @@ JSON_MODE=false
 REQUIRE_TASKS=false
 INCLUDE_TASKS=false
 PATHS_ONLY=false
+FEATURE_SLUG_OVERRIDE=""
 
-for arg in "$@"; do
-    case "$arg" in
-        --json)
-            JSON_MODE=true
-            ;;
-        --require-tasks)
-            REQUIRE_TASKS=true
-            ;;
-        --include-tasks)
-            INCLUDE_TASKS=true
-            ;;
-        --paths-only)
-            PATHS_ONLY=true
-            ;;
-        --help|-h)
-            cat << 'EOF'
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --json)
+        JSON_MODE=true
+        ;;
+    --require-tasks)
+        REQUIRE_TASKS=true
+        ;;
+    --include-tasks)
+        INCLUDE_TASKS=true
+        ;;
+    --paths-only)
+        PATHS_ONLY=true
+        ;;
+    --feature)
+        shift
+        if [[ -z "${1:-}" ]] || [[ "$1" == --* ]]; then
+            echo "ERROR: --feature requires a slug value." >&2
+            exit 1
+        fi
+        FEATURE_SLUG_OVERRIDE="$1"
+        ;;
+    --help | -h)
+        cat <<'EOF'
 Usage: check-prerequisites.sh [OPTIONS]
 
 Consolidated prerequisite checking for Spec-Driven Development workflow.
@@ -52,6 +62,7 @@ OPTIONS:
   --require-tasks     Require tasks.md to exist (for implementation phase)
   --include-tasks     Include tasks.md in AVAILABLE_DOCS list
   --paths-only        Only output path variables (no prerequisite validation)
+  --feature <slug>    Resolve paths for the given feature slug
   --help, -h          Show this help message
 
 EXAMPLES:
@@ -65,24 +76,31 @@ EXAMPLES:
   ./check-prerequisites.sh --paths-only
   
 EOF
-            exit 0
-            ;;
-        *)
-            echo "ERROR: Unknown option '$arg'. Use --help for usage information." >&2
-            exit 1
-            ;;
+        exit 0
+        ;;
+    *)
+        echo "ERROR: Unknown option '$1'. Use --help for usage information." >&2
+        exit 1
+        ;;
     esac
+    shift
 done
 
 # Source common functions
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-# Get feature paths and validate branch
-_paths_output=$(get_feature_paths) || { echo "ERROR: Failed to resolve feature paths" >&2; exit 1; }
+# Get feature paths.
+_paths_output=$(get_feature_paths "$FEATURE_SLUG_OVERRIDE") || {
+    echo "ERROR: Failed to resolve feature paths" >&2
+    exit 1
+}
 eval "$_paths_output"
 unset _paths_output
-# check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
+
+if [[ -n "$FEATURE_SLUG_OVERRIDE" ]]; then
+    write_current_feature "$FEATURE_SLUG_OVERRIDE" "$REPO_ROOT"
+fi
 
 # If paths-only mode, output paths and exit (support JSON + paths-only combined)
 if $PATHS_ONLY; then
@@ -91,19 +109,21 @@ if $PATHS_ONLY; then
         if has_jq; then
             jq -cn \
                 --arg repo_root "$REPO_ROOT" \
-                --arg branch "$CURRENT_BRANCH" \
+                --arg feature_slug "$FEATURE_SLUG" \
+                --arg feature_name "$FEATURE_NAME" \
                 --arg feature_dir "$FEATURE_DIR" \
                 --arg feature_spec "$FEATURE_SPEC" \
                 --arg impl_plan "$IMPL_PLAN" \
                 --arg tasks "$TASKS" \
-                '{REPO_ROOT:$repo_root,BRANCH:$branch,FEATURE_DIR:$feature_dir,FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,TASKS:$tasks}'
+                '{REPO_ROOT:$repo_root,FEATURE_SLUG:$feature_slug,FEATURE_NAME:$feature_name,FEATURE_DIR:$feature_dir,FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,TASKS:$tasks}'
         else
-            printf '{"REPO_ROOT":"%s","BRANCH":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS":"%s"}\n' \
-                "$(json_escape "$REPO_ROOT")" "$(json_escape "$CURRENT_BRANCH")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$TASKS")"
+            printf '{"REPO_ROOT":"%s","FEATURE_SLUG":"%s","FEATURE_NAME":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS":"%s"}\n' \
+                "$(json_escape "$REPO_ROOT")" "$(json_escape "$FEATURE_SLUG")" "$(json_escape "$FEATURE_NAME")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$TASKS")"
         fi
     else
         echo "REPO_ROOT: $REPO_ROOT"
-        echo "BRANCH: $CURRENT_BRANCH"
+        echo "FEATURE_SLUG: $FEATURE_SLUG"
+        echo "FEATURE_NAME: $FEATURE_NAME"
         echo "FEATURE_DIR: $FEATURE_DIR"
         echo "FEATURE_SPEC: $FEATURE_SPEC"
         echo "IMPL_PLAN: $IMPL_PLAN"
@@ -177,13 +197,13 @@ else
     # Text output
     echo "FEATURE_DIR:$FEATURE_DIR"
     echo "AVAILABLE_DOCS:"
-    
+
     # Show status of each potential document
     check_file "$RESEARCH" "research.md"
     check_file "$DATA_MODEL" "data-model.md"
     check_dir "$CONTRACTS_DIR" "contracts/"
     check_file "$QUICKSTART" "quickstart.md"
-    
+
     if $INCLUDE_TASKS; then
         check_file "$TASKS" "tasks.md"
     fi
