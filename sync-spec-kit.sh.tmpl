@@ -2,6 +2,13 @@
 set -euo pipefail
 
 REPO_ROOT="__REPO_ROOT_PLACEHOLDER__"
+_NO_PUSH=0
+
+for _arg in "$@"; do
+    case "$_arg" in
+        --no-push) _NO_PUSH=1 ;;
+    esac
+done
 
 if ! command -v jq >/dev/null 2>&1; then
     echo "ERROR: jq is required but not found in PATH." >&2
@@ -132,4 +139,7 @@ fi
 
 _msg="Sync: $(date '+%Y-%m-%d %H:%M:%S')"
 git commit -m "$_msg"
-git push
+
+if [ "$_NO_PUSH" -eq 0 ]; then
+    git push
+fi
