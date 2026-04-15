@@ -26,8 +26,8 @@ esac
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
 _source_opencode="$_script_dir/src/.opencode"
 _source_specify="$_script_dir/src/.specify"
-_template="$_script_dir/sync-spec-kit.sh.tmpl"
-_registry="$_script_dir/sync-spec-kit-registry.json"
+_template="$_script_dir/src/sync-spec-kit.sh.tmpl"
+_registry="$_script_dir/src/sync-spec-kit-registry.json"
 
 for _d in "$_source_opencode" "$_source_specify"; do
 	if [ ! -d "$_d" ]; then

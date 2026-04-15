@@ -34,8 +34,8 @@ _sync_exact_files() {
     while [ "$i" -lt "$count" ]; do
         local rel
         rel=$(jq -r ".exact_files[$i]" "$_registry")
-        local src="$_target_dir/src/$rel"
-        local dst="$REPO_ROOT/$rel"
+        local src="$_target_dir/$rel"
+        local dst="$REPO_ROOT/src/$rel"
 
         if [ -f "$src" ]; then
             local dst_dir
@@ -62,11 +62,11 @@ _sync_glob_patterns() {
 
         local matched=0
         local src_file
-        for src_file in "$_target_dir/src"/$pattern; do
+        for src_file in "$_target_dir"/$pattern; do
             [ -f "$src_file" ] || continue
             matched=1
             local rel="${src_file#$_target_dir/}"
-            local dst="$REPO_ROOT/$rel"
+            local dst="$REPO_ROOT/src/$rel"
             local dst_dir
             dst_dir=$(dirname "$dst")
             mkdir -p "$dst_dir"
@@ -75,15 +75,15 @@ _sync_glob_patterns() {
         done
 
         if [ "$matched" -eq 0 ]; then
-            for dst_file in "$REPO_ROOT"/$pattern; do
+            for dst_file in "$REPO_ROOT/src"/$pattern; do
                 [ -f "$dst_file" ] || continue
-                local rel="${dst_file#$REPO_ROOT/}"
+                local rel="${dst_file#$REPO_ROOT/src/}"
                 rm -- "$dst_file"
                 _changed_paths+=("$rel")
             done
         fi
 
-        _clean_glob_deletions "$pattern" "$_target_dir/src" "$REPO_ROOT"
+        _clean_glob_deletions "$pattern" "$_target_dir" "$REPO_ROOT/src"
 
         i=$((i + 1))
     done
