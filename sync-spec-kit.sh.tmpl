@@ -2,11 +2,13 @@
 set -euo pipefail
 
 REPO_ROOT="__REPO_ROOT_PLACEHOLDER__"
-_NO_PUSH=0
+_COMMIT=0
+_PUSH=0
 
 for _arg in "$@"; do
     case "$_arg" in
-        --no-push) _NO_PUSH=1 ;;
+        -c|--commit) _COMMIT=1 ;;
+        -p|--push) _COMMIT=1; _PUSH=1 ;;
     esac
 done
 
@@ -32,7 +34,7 @@ _sync_exact_files() {
     while [ "$i" -lt "$count" ]; do
         local rel
         rel=$(jq -r ".exact_files[$i]" "$_registry")
-        local src="$_target_dir/$rel"
+        local src="$_target_dir/src/$rel"
         local dst="$REPO_ROOT/$rel"
 
         if [ -f "$src" ]; then
@@ -60,7 +62,7 @@ _sync_glob_patterns() {
 
         local matched=0
         local src_file
-        for src_file in "$_target_dir"/$pattern; do
+        for src_file in "$_target_dir/src"/$pattern; do
             [ -f "$src_file" ] || continue
             matched=1
             local rel="${src_file#$_target_dir/}"
@@ -81,7 +83,7 @@ _sync_glob_patterns() {
             done
         fi
 
-        _clean_glob_deletions "$pattern" "$_target_dir" "$REPO_ROOT"
+        _clean_glob_deletions "$pattern" "$_target_dir/src" "$REPO_ROOT"
 
         i=$((i + 1))
     done
@@ -129,17 +131,19 @@ if [ "${#_changed_paths[@]}" -eq 0 ]; then
     exit 0
 fi
 
-cd "$REPO_ROOT"
-git add -- "${_changed_paths[@]}"
+if [ "$_COMMIT" -eq 1 ]; then
+    cd "$REPO_ROOT"
+    git add -- "${_changed_paths[@]}"
 
-if git diff --cached --quiet; then
-    echo "No changes to sync."
-    exit 0
-fi
+    if git diff --cached --quiet; then
+        echo "No changes to sync."
+        exit 0
+    fi
 
-_msg="Sync: $(date '+%Y-%m-%d %H:%M:%S')"
-git commit -m "$_msg"
+    _msg="Sync: $(date '+%Y-%m-%d %H:%M:%S')"
+    git commit -m "$_msg"
 
-if [ "$_NO_PUSH" -eq 0 ]; then
-    git push
+    if [ "$_PUSH" -eq 1 ]; then
+        git push
+    fi
 fi
