@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ $# -ne 1 ]; then
-	echo "Usage: $0 <target_directory>" >&2
+_no_backup=0
+if [ $# -eq 2 ] && [ "$1" = "--no-backup" ]; then
+	_no_backup=1
+	shift
+elif [ $# -eq 2 ]; then
+	echo "Usage: $0 [--no-backup] <target_directory>" >&2
+	exit 1
+elif [ $# -ne 1 ]; then
+	echo "Usage: $0 [--no-backup] <target_directory>" >&2
 	exit 1
 fi
 
@@ -77,8 +84,12 @@ _copy_tree() {
 		local dst="$dst_root/$rel_file"
 
 		if [ -f "$dst" ]; then
-			_backup_file "$dst"
-			_report+=("$dst_root/$rel_file -> $(dirname "$dst")/$(basename "$dst")")
+			if [ "$_no_backup" -eq 0 ]; then
+				_backup_file "$dst"
+				_report+=("$dst_root/$rel_file -> $(dirname "$dst")/$(basename "$dst")")
+			else
+				_report+=("$dst_root/$rel_file")
+			fi
 		fi
 
 		cp -- "$src_root/$rel_file" "$dst"
