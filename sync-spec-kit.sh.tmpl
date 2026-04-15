@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="__REPO_ROOT_PLACEHOLDER__"
+
+if ! command -v jq >/dev/null 2>&1; then
+    echo "ERROR: jq is required but not found in PATH." >&2
+    exit 1
+fi
+
+_target_dir="$(cd "$(dirname "$0")" && pwd)"
+_registry="$_target_dir/sync-spec-kit-registry.json"
+
+if [ ! -f "$_registry" ]; then
+    echo "ERROR: Registry not found at $_registry" >&2
+    exit 1
+fi
+
+_changed_paths=()
+
+_sync_exact_files() {
+    local count
+    count=$(jq '.exact_files | length' "$_registry")
+    local i=0
+    while [ "$i" -lt "$count" ]; do
+        local rel
+        rel=$(jq -r ".exact_files[$i]" "$_registry")
+        local src="$_target_dir/$rel"
+        local dst="$REPO_ROOT/$rel"
+
+        if [ -f "$src" ]; then
+            local dst_dir
+            dst_dir=$(dirname "$dst")
+            mkdir -p "$dst_dir"
+            cp -- "$src" "$dst"
+            _changed_paths+=("$rel")
+        elif [ -f "$dst" ]; then
+            rm -- "$dst"
+            _changed_paths+=("$rel")
+        fi
+
+        i=$((i + 1))
+    done
+}
+
+_sync_glob_patterns() {
+    local count
+    count=$(jq '.glob_patterns | length' "$_registry")
+    local i=0
+    while [ "$i" -lt "$count" ]; do
+        local pattern
+        pattern=$(jq -r ".glob_patterns[$i]" "$_registry")
+
+        local matched=0
+        local src_file
+        for src_file in "$_target_dir"/$pattern; do
+            [ -f "$src_file" ] || continue
+            matched=1
+            local rel="${src_file#$_target_dir/}"
+            local dst="$REPO_ROOT/$rel"
+            local dst_dir
+            dst_dir=$(dirname "$dst")
+            mkdir -p "$dst_dir"
+            cp -- "$src_file" "$dst"
+            _changed_paths+=("$rel")
+        done
+
+        if [ "$matched" -eq 0 ]; then
+            for dst_file in "$REPO_ROOT"/$pattern; do
+                [ -f "$dst_file" ] || continue
+                local rel="${dst_file#$REPO_ROOT/}"
+                rm -- "$dst_file"
+                _changed_paths+=("$rel")
+            done
+        fi
+
+        _clean_glob_deletions "$pattern" "$_target_dir" "$REPO_ROOT"
+
+        i=$((i + 1))
+    done
+}
+
+_clean_glob_deletions() {
+    local pattern="$1"
+    local target_dir="$2"
+    local repo_root="$3"
+
+    local target_files=()
+    local src_file
+    for src_file in "$target_dir"/$pattern; do
+        [ -f "$src_file" ] || continue
+        local rel="${src_file#$target_dir/}"
+        target_files+=("$rel")
+    done
+
+    local dst_file
+    for dst_file in "$repo_root"/$pattern; do
+        [ -f "$dst_file" ] || continue
+        local rel="${dst_file#$repo_root/}"
+
+        local found=0
+        local tf
+        for tf in "${target_files[@]}"; do
+            if [ "$tf" = "$rel" ]; then
+                found=1
+                break
+            fi
+        done
+
+        if [ "$found" -eq 0 ]; then
+            rm -- "$dst_file"
+            _changed_paths+=("$rel")
+        fi
+    done
+}
+
+_sync_exact_files
+_sync_glob_patterns
+
+if [ "${#_changed_paths[@]}" -eq 0 ]; then
+    echo "No changes to sync."
+    exit 0
+fi
+
+cd "$REPO_ROOT"
+git add -- "${_changed_paths[@]}"
+
+if git diff --cached --quiet; then
+    echo "No changes to sync."
+    exit 0
+fi
+
+_msg="Sync: $(date '+%Y-%m-%d %H:%M:%S')"
+git commit -m "$_msg"
+git push

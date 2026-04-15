@@ -1,0 +1,13 @@
+{
+  "exact_files": [
+    ".specify/integrations/opencode/scripts/update-context.sh",
+    ".specify/.gitignore",
+    ".specify/init-options.json",
+    "sync-spec-kit-registry.json"
+  ],
+  "glob_patterns": [
+    ".opencode/command/*.md",
+    ".specify/scripts/bash/*.sh",
+    ".specify/templates/*.md"
+  ]
+}
