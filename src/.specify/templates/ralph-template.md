@@ -1,11 +1,11 @@
-You are implementing a feature "[FEATURE]" from spec-kit artifacts stored in this repository.
+You are implementing feature "[FEATURE]" from spec-kit artifacts stored in this repository.
 
 At the start of every iteration:
-1. Re-read the project guidance files from disk - `AGENTS.md` files
+1. Re-read the project guidance files from disk.
 2. Read the spec-kit feature docs:
    - `specs/[###-feature-name]/spec.md`
    - `specs/[###-feature-name]/plan.md`
-   - `specs/[###-feature-name]/`tasks.md``
+   - `specs/[###-feature-name]/tasks.md`
 3. If present, also read:
    - `specs/[###-feature-name]/research.md`
    - `specs/[###-feature-name]/data-model.md`
@@ -30,4 +30,4 @@ Execution rules:
 
 Completion rules:
 - Emit <promise>COMPLETE</promise> only when all required tasks in `tasks.md` are complete and the relevant validations pass.
-- If blocked, explain the blocker clearly and stop without emitting DONE.
+- If blocked, explain the blocker clearly and stop without emitting COMPLETE.

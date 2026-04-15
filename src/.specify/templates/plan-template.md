@@ -22,10 +22,7 @@
 **Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
 **Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
 **Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Target Hosts**: [e.g., Zoe, Amy, zoe_staging or NEEDS CLARIFICATION]  
 **Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Exposure**: [e.g., localhost-only, reverse-proxied, internal-only or NEEDS CLARIFICATION]  
-**Secrets Changes**: [e.g., none, Ansible vault, .env.j2, ignored runtime file or NEEDS CLARIFICATION]  
 **Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
 **Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
@@ -34,23 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **Explicit Scope**: The plan identifies the tracked files, services, hosts,
-  and deployment paths that define the change. Manual-only or implicit steps are
-  eliminated or documented as exceptions.
-- **Secrets Handling**: Sensitive values remain in vault files, `.env`
-  templates, or other ignored files; no secrets are introduced into tracked
-  artifacts.
-- **Topology and Placement**: Target placement on `Zoe`, `Amy`, or
-  `zoe_staging` is identified and justified according to the topology rules.
-- **Production and Staging Alignment**: Production and staging changes are
-  planned together, or any intentional divergence is explicitly documented.
-- **Staging Isolation**: Staging uses staging-only hosts, domains, credentials,
-  and endpoints and does not depend on production services.
-- **Validation**: Concrete validation commands or checks are listed for every
-  meaningful infrastructure change.
-
-If any gate fails, resolve it before implementation or document the exception
-and rationale in `## Complexity Tracking`.
+[Gates determined based on constitution file]
 
 ## Project Structure
 

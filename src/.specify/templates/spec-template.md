@@ -5,14 +5,6 @@
 **Status**: Draft
 **Input**: User description: "$ARGUMENTS"
 
-## Infrastructure Context *(mandatory for meaningful infra changes)*
-
-- **Impacted Areas**: [e.g., `services/<name>/`, `ansible/inventory.yml`]
-- **Target Hosts**: [e.g., `Zoe`, `Amy`, `zoe_staging` or NEEDS CLARIFICATION]
-- **Exposure Model**: [e.g., localhost-only, reverse-proxied, internal-only, host network]
-- **Production/Staging Impact**: [how both environments change, or why a divergence is intentional]
-- **Secrets Handling**: [e.g., Ansible vault, `.env.j2`, ignored runtime file, or none]
-
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -107,11 +99,6 @@
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
-
-## Validation Requirements *(mandatory for meaningful infra changes)*
-
-- **VR-001**: [Command, dry run, syntax check, health check, or smoke test]
-- **VR-002**: [Expected validation outcome and environment]
 
 ## Success Criteria *(mandatory)*
 
